@@ -15,7 +15,7 @@ export async function POST(request: Request) {
     }
 
     const [rutas]: any = await db.execute(
-      'SELECT puestos_disponibles FROM rutas WHERE id = ?',
+      'SELECT puestos_disponibles, conductor_id, origen, destino FROM rutas WHERE id = ?',
       [ruta_id]
     );
 
@@ -42,9 +42,22 @@ export async function POST(request: Request) {
       [ruta_id]
     );
 
+    // Descontar 70 puntos al pasajero
     await db.execute(
       'UPDATE usuarios SET puntos = puntos - 70 WHERE id = ?',
       [pasajero_id]
+    );
+
+    // Sumar 5 puntos al conductor por llevar pasajero gratis
+    await db.execute(
+      'UPDATE usuarios SET puntos = puntos + 5 WHERE id = ?',
+      [rutas[0].conductor_id]
+    );
+
+    // Notificar al conductor
+    await db.execute(
+      'INSERT INTO notificaciones (usuario_id, mensaje) VALUES (?, ?)',
+      [rutas[0].conductor_id, `Un pasajero uso un viaje gratis en tu ruta ${rutas[0].origen} → ${rutas[0].destino}. +5 puntos para ti.`]
     );
 
     const [updatedUser]: any = await db.execute(

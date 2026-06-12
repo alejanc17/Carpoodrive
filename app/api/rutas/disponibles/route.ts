@@ -12,7 +12,7 @@ export async function GET(request: Request) {
       FROM rutas r 
       JOIN usuarios u ON r.conductor_id = u.id
       WHERE r.estado = 'activa' AND r.puestos_disponibles > 0
-      AND (r.fecha >= CURDATE() OR r.fecha IS NULL)
+      AND TIMESTAMP(r.fecha, r.hora_salida) > NOW() - INTERVAL 5 HOUR
     `;
     const params: any[] = [];
 
