@@ -69,26 +69,6 @@ export default function PassengerDashboard() {
     } else { setError(data.error); }
   };
 
-  const handleCompletarViaje = async (reserva_id: number) => {
-    setMensaje(''); setError('');
-    const res = await fetch('/api/reservas/completar', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ reserva_id }),
-    });
-    const data = await res.json();
-    if (res.ok) {
-      setPuntos(data.puntos);
-      const viajesGratis = Math.floor(data.puntos / 70);
-      if (viajesGratis > 0) {
-        setMensaje(`Viaje completado. Tienes ${data.puntos} puntos — ${viajesGratis} viaje${viajesGratis > 1 ? 's' : ''} gratis disponible${viajesGratis > 1 ? 's' : ''}.`);
-      } else {
-        setMensaje(`Viaje completado. Tienes ${data.puntos} puntos — te faltan ${70 - (data.puntos % 70)} para un viaje gratis.`);
-      }
-      cargarReservas(usuario.id);
-    } else { setError(data.error ?? 'Error al completar viaje'); }
-  };
-
   const handleCancelarReserva = async (reserva_id: number) => {
     if (!confirm('¿Segura que quieres cancelar esta reserva?')) return;
     setMensaje(''); setError('');
@@ -379,7 +359,7 @@ export default function PassengerDashboard() {
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
               {misReservas.map((reserva: any) => (
-                <div className="reserva-card" key={reserva.id} style={{ display: 'grid', gridTemplateColumns: '2fr 80px 90px auto auto auto auto', gap: '16px', alignItems: 'center', padding: '18px 20px', background: '#FAFAF8', border: '0.5px solid #EDEDE9', borderRadius: '10px' }}>
+                <div className="reserva-card" key={reserva.id} style={{ display: 'grid', gridTemplateColumns: '2fr 80px 90px auto auto auto', gap: '16px', alignItems: 'center', padding: '18px 20px', background: '#FAFAF8', border: '0.5px solid #EDEDE9', borderRadius: '10px' }}>
                   <div>
                     <p style={{ fontSize: '10px', color: '#9E9890', marginBottom: '4px', fontFamily: sans, letterSpacing: '1px' }}>RUTA</p>
                     <p style={{ fontSize: '13px', color: '#1a1a1a', fontWeight: 500, fontFamily: sans }}>{reserva.origen} → {reserva.destino}</p>
@@ -396,14 +376,6 @@ export default function PassengerDashboard() {
                     </p>
                   </div>
                   <div>{badgeEstado(reserva.estado)}</div>
-                  <div>
-                    {reserva.estado === 'confirmada' && (
-                      <button onClick={() => handleCompletarViaje(reserva.id)}
-                        style={{ background: '#EDEDE9', color: '#1a1a1a', border: '0.5px solid #D6CCC2', borderRadius: '8px', padding: '8px 16px', fontSize: '12px', cursor: 'pointer', fontFamily: sans, whiteSpace: 'nowrap' as const }}>
-                        Completar viaje
-                      </button>
-                    )}
-                  </div>
                   <div>
                     {reserva.estado === 'confirmada' && (
                       <button onClick={() => handleCancelarReserva(reserva.id)}
