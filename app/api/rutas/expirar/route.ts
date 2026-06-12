@@ -8,7 +8,7 @@ export async function POST() {
       UPDATE rutas 
       SET estado = 'cancelada'
       WHERE estado = 'activa'
-      AND TIMESTAMP(fecha, hora_salida) < NOW() + INTERVAL 5 HOUR
+      AND TIMESTAMP(fecha, hora_salida) < NOW() - INTERVAL 5 HOUR
       AND id NOT IN (
         SELECT DISTINCT ruta_id FROM reservas WHERE estado = 'confirmada'
       )
@@ -21,7 +21,7 @@ export async function POST() {
       JOIN reservas res ON res.ruta_id = r.id
       WHERE r.estado = 'activa'
       AND res.estado = 'confirmada'
-      AND TIMESTAMP(r.fecha, r.hora_salida) < NOW() + INTERVAL 5 HOUR
+      AND TIMESTAMP(r.fecha, r.hora_salida) < NOW() - INTERVAL 5 HOUR
     `);
 
     for (const ruta of rutasExpiradas) {
@@ -36,7 +36,6 @@ export async function POST() {
       );
 
       for (const reserva of reservas) {
-        // Completar reserva y sumar puntos al pasajero
         await db.execute(
           "UPDATE reservas SET estado = 'completada' WHERE id = ?",
           [reserva.id]
@@ -51,7 +50,6 @@ export async function POST() {
         );
       }
 
-      // Sumar puntos al conductor y notificarlo
       await db.execute(
         "UPDATE usuarios SET puntos = puntos + 10 WHERE id = ?",
         [ruta.conductor_id]
