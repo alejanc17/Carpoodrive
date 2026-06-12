@@ -3,18 +3,7 @@ import db from '@/lib/db';
 
 export async function POST() {
   try {
-    // Rutas expiradas sin pasajeros → cancelada
-    await db.execute(`
-      UPDATE rutas 
-      SET estado = 'cancelada'
-      WHERE estado = 'activa'
-      AND TIMESTAMP(fecha, hora_salida) < NOW() - INTERVAL 5 HOUR
-      AND id NOT IN (
-        SELECT DISTINCT ruta_id FROM reservas WHERE estado = 'confirmada'
-      )
-    `);
-
-    // Rutas expiradas con pasajeros → completada
+    // PRIMERO: Rutas expiradas con pasajeros → completada
     const [rutasExpiradas]: any = await db.execute(`
       SELECT DISTINCT r.id, r.conductor_id, r.origen, r.destino
       FROM rutas r
@@ -59,6 +48,17 @@ export async function POST() {
         [ruta.conductor_id, `Tu ruta ${ruta.origen} → ${ruta.destino} fue completada automáticamente. +10 puntos`]
       );
     }
+
+    // DESPUÉS: Rutas expiradas sin pasajeros → cancelada
+    await db.execute(`
+      UPDATE rutas 
+      SET estado = 'cancelada'
+      WHERE estado = 'activa'
+      AND TIMESTAMP(fecha, hora_salida) < NOW() - INTERVAL 5 HOUR
+      AND id NOT IN (
+        SELECT DISTINCT ruta_id FROM reservas WHERE estado = 'confirmada'
+      )
+    `);
 
     return NextResponse.json({ mensaje: 'Rutas expiradas procesadas' });
   } catch (error: any) {
